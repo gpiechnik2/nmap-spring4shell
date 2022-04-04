@@ -28,10 +28,10 @@ PORT     STATE SERVICE    REASON  VERSION
 
 ## Arguments
 We can use several variables in the script. These are as follows:
-- endpoint - relative url. On `https://bugspace.pl/search/videos` it will be `/search/videos`,
-- command - command to be run on the server.  The default command is `id`,
-- assertion - the checked string inside the server response. The default assertion is `uid`,
-- filename - file name on the server. For more information see [here](https://www.lunasec.io/docs/blog/spring-rce-vulnerabilities/). The default name is `shell`.
+- `endpoint` - relative url. On `https://bugspace.pl/search/videos` it will be `/search/videos`,
+- `command` - command to be run on the server.  The default command is `id`,
+- `assertion` - the checked string inside the server response. The default assertion is `uid`,
+- `filename` - file name on the server. For more information see [here](https://www.lunasec.io/docs/blog/spring-rce-vulnerabilities/). The default name is `shell`.
 
 ## Sources to check
 https://www.lunasec.io/docs/blog/spring-rce-vulnerabilities/
