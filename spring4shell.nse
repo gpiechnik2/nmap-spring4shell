@@ -105,8 +105,6 @@ action = function(host, port)
     local response_body = response.body
     local status = response.status
 
-    print(host.ip .. endpoint .. "/" .. filename .. ".jsp?pwd=j&cmd=" .. command)
-
     if status == nil then
       -- Something went really wrong out there
       -- According to the NSE way we will die silently rather than spam user with error messages
