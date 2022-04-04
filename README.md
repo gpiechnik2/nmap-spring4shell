@@ -33,8 +33,8 @@ We can use several variables in the script. These are as follows:
 - `assertion` - the checked string inside the server response. The default assertion is `uid`,
 - `filename` - file name on the server. For more information see [here](https://www.lunasec.io/docs/blog/spring-rce-vulnerabilities/). The default name is `shell`.
 
-## Sources to check
-https://www.lunasec.io/docs/blog/spring-rce-vulnerabilities/
+## Additional data
+Tested on application from [here](https://github.com/giterlizzi/nmap-log4shell) and [here](https://github.com/reznok/Spring4Shell-POC)
 
 ## License
 Same as Nmap. See https://nmap.org/book/man-legal.html
